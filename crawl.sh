@@ -1,7 +1,5 @@
  #!/bin/bash
 
-opts='-type f -size -10M ! -iname "*.wav" ! -iname "*.mp3"'
-
 [[ $# -lt 1 ]] && {
 	echo "$0 index_local_path [/usr/bin/find options]"
 	echo "example: $0 /mnt/share/ -type f -size -10M ! -iname '*.wav' ! -iname '*.mp3'"
@@ -46,14 +44,14 @@ index="$(basename $1).csv"
 session_file=".$(basename $1).sess"
 is_resume=$(session_create $session_file)
 
-find $1 $opts -print | 
+find $1 -type f -size -15M ! -iname '*.pdf' -print |
 while read path
 do
 	[[ $is_resume = 1 && $(session_is_file_done $path) = 1 ]] && {
 		echo "(skip $path)"
 		continue
 	}
-	echo "$path"
+	echo -n "$path"
 	echo -n "$path" | escape >> "$index"
 	echo -n "," >> "$index"
 	ext=${path##*.}
@@ -64,34 +62,42 @@ do
 		*/xml)
 			echo -n "xml," >> "$index"
 			cat "$path" | escape >> "$index"
+			echo " [+]"
 			;;
 		*/*html*)
 			echo -n "html," >> "$index"
 			cat "$path" | lynx -nolist -dump -stdin | escape >> "$index"
+			echo " [+]"
 			;;
 		text/*|*/*script)
 			echo -n "text," >> "$index"
 			cat "$path" | escape >> "$index"
+			echo " [+]"
 			;;
 		application/msword)
 			echo -n "doc," >> "$index"
 			catdoc "$path" | escape >> "$index"
+			echo " [+]"
 			;;
 		application/vnd.openxmlformats-officedocument.wordprocessingml.document)
 			echo -n "doc," >> "$index"
 			unzip -p "$path" | grep '<w:r' | sed 's/<w:p[^<\/]*>/ /g' | sed 's/<[^<]*>//g' | grep -v '^[[:space:]]*$' | sed G | escape >> "$index"
+			echo " [+]"
 			;;
 		application/vnd.ms-excel|application/vnd.openxmlformats-officedocument.spreadsheetml.sheet)
 			echo -n "xls," >> "$index"
 			xls2csv -x "$path" | escape >> "$index"
+			echo " [+]"
 			;;
 		application/pdf)
 			echo -n "pdf," >> "$index"
 			pdf2txt -t text "$path" | escape >> "$index"
+			echo " [+]"
 			;;
 		application/x-executable|application/x-ms-dos-executable)
 			echo -n "exe," >> "$index"
 			/opt/radare2/bin/rabin2 -z "$path" | sed -rn "s/vaddr=[^\s]+.*string=(.*)/\1/p" | escape >> "$index"
+			echo " [+]"
 			;;
 		application/*compressed*|application/*zip*|application/*rar*|application/*tar*|application/*gzip*)
 			echo -n "zip," >> "$index"
@@ -104,12 +110,16 @@ do
 			ln -s "$(realpath $index)" "$temp/$index"
 			( cd "$temp"; "./$(basename $0)" "$(dirname $1|cut -c 2-)/${index%.*}"; )
 			rm -r $temp
+			session_file_done $path
+			echo " [+]"
+			break
 			;;
 		image/*)
 			echo -n "image," >> "$index"
 			identify -verbose "$path" | escape >> "$index"
-			#tesseract "$path" stdout -l eng >> "$index"
-			#tesseract "$path" stdout -l rus >> "$index"
+			tesseract "$path" stdout -l eng >> "$index"
+			tesseract "$path" stdout -l rus >> "$index"
+			echo " [+]"
 			;;
 		message/*)
 			echo -n "message," >> "$index"
@@ -124,22 +134,31 @@ do
 			ln -s "$(realpath $index)" "$temp/$index"
 			( cd "$temp"; "./$(basename $0)" "${index%.*}"; )
 			rm -r $temp
+			session_file_done $path
+			echo " [+]"
+			break
 			;;
 		application/octet-stream)
 			echo -n "raw," >> "$index"
 			strings "$path" | escape >> "$index"
+			echo " [+]"
 			;;
 		application/x-raw-disk-image)
 			echo -n "disk," >> "$index"
 			binwalk "$path" | escape >> "$index"
+			echo " [+]"
 			;;
 		*)
 			echo -n "unknown," >> "$index"
 			file "$path" | grep text > /dev/null &&
-			cat "$path" | escape >> "$index" ||
 			{
+				cat "$path" | escape >> "$index"
+				echo " [+]"
+			} || {
 				#strings "$path" >> "$index"
+				echo -n "," >> "$index"
 				echo "$path $mime" >> unknown_mime.log
+				echo " [-]"
 			}
 			;;
 	esac
