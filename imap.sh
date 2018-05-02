@@ -8,6 +8,7 @@
 
 SERVER=$1
 [[ $# -lt 2 ]] && { echo "enter user:pass"; read CREDS; } || CREDS=$2
+EMAIL="${CREDS%%:*}"
 
 function get_folders(){
 	curl -s --insecure --user "$CREDS" "$SERVER" |
@@ -21,21 +22,22 @@ function get_messages_count(){
 	sed -rn 's/\* ([0-9]+) .*/\1/p'
 }
 
-function get_message(){
+function get_messages(){
 	folder=$1
-	message_id=$2
-	curl -s --insecure --user "$CREDS" "$SERVER/$folder;UID=$message_id" -o "$folder/$message_id"
+	messages_count=$2
+	curl -s --insecure --user "$CREDS" "$SERVER/$folder;UID=[1-$messages_count]" > "messages.eml"
+	csplit "messages.eml" '/^Return-Path:/' '{*}' > /dev/null
+	rm messages.eml xx00
 }
 
+mkdir "$EMAIL" && pushd "$EMAIL" > /dev/null
 for folder in $(get_folders)
 do
 	folder=$(echo $folder | tr -d '\r')
-	echo "[*] $folder"
-	mkdir "$folder"
+	mkdir "$folder" && pushd "$folder" > /dev/null
 	max=$(get_messages_count "$folder")
-	for ((id=max; id>0; id--))
-	do
-		echo "[+] $id"
-		get_message $folder $id
-	done
+	echo "[+] $folder $max messages"
+	get_messages $folder $max
+	popd > /dev/null
 done
+popd > /dev/null

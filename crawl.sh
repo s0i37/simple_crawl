@@ -1,5 +1,8 @@
  #!/bin/bash
 
+GREEN=$'\x1b[32m'
+RESET=$'\x1b[39m'
+
 [[ $# -lt 1 ]] && {
 	echo "$0 index_local_path [/usr/bin/find options]"
 	echo "example: $0 /mnt/share/ -type f -size -10M ! -iname '*.wav' ! -iname '*.mp3'"
@@ -34,9 +37,9 @@ function escape(){
 	echo -n '"'
 	while read line
 	do
-		echo -n "$line"|sed -r 's/"/""/g'
+		echo -n "$line" | sed -r 's/"//g' | sed -r 's/,//g' | sed '/^\s*$/d' | tr '\r\n' ' '
 	done
-	echo -n "$line"|sed -r 's/"/""/g'
+	echo -n "$line" | sed -r 's/"//g' | sed -r 's/,//g' | sed '/^\s*$/d' | tr '\r\n' ' '
 	echo -n '"'
 }
 
@@ -51,10 +54,12 @@ do
 		echo "(skip $path)"
 		continue
 	}
-	echo -n "$path"
+	printf "\n" >> "$index"
+	echo -n $GREEN "$path" $RESET
 	echo -n "$path" | escape >> "$index"
 	echo -n "," >> "$index"
-	ext=${path##*.}
+	filename=$(basename $path)
+	ext=${filename##*.}
 	echo -n "$ext" | escape >> "$index"
 	echo -n "," >> "$index"
 	mime=$(xdg-mime query filetype "$path")
@@ -102,7 +107,7 @@ do
 		application/*compressed*|application/*zip*|application/*rar*|application/*tar*|application/*gzip*)
 			echo -n "zip," >> "$index"
 			7z l "$path" | tail -n +13 | escape >> "$index"
-			printf "\n" >> "$index" 
+			#printf "\n" >> "$index" 
 			temp=$(tempfile)
 			rm $temp && mkdir -p "$temp/$path"
 			7z x "$path" -o"$temp/$path" 1> /dev/null 2> /dev/null
@@ -112,23 +117,23 @@ do
 			rm -r $temp
 			session_file_done $path
 			echo " [+]"
-			break
+			#break
 			;;
 		image/*)
 			echo -n "image," >> "$index"
 			identify -verbose "$path" | escape >> "$index"
-			tesseract "$path" stdout -l eng >> "$index"
-			tesseract "$path" stdout -l rus >> "$index"
+			#tesseract "$path" stdout -l eng >> "$index"
+			#tesseract "$path" stdout -l rus >> "$index"
 			echo " [+]"
 			;;
 		message/*)
 			echo -n "message," >> "$index"
 			mu view "$path" | escape >> "$index"
-			printf "\n" >> "$index"
+			#printf "\n" >> "$index"
 			temp=$(tempfile)
 			rm $temp && mkdir -p "$temp/$path"
 			cp "$path" "$temp/$path/"
-			munpack -t -f -C "$(realpath $temp/$path)" "$(basename $path)"
+			munpack -t -f -C "$(realpath $temp/$path)" "$(basename $path)" > /dev/null
 			rm "$temp/$path/$(basename $path)"
 			ln -s "$(realpath $0)" "$temp/$(basename $0)"
 			ln -s "$(realpath $index)" "$temp/$index"
@@ -136,11 +141,12 @@ do
 			rm -r $temp
 			session_file_done $path
 			echo " [+]"
-			break
+			#break
 			;;
 		application/octet-stream)
 			echo -n "raw," >> "$index"
-			strings "$path" | escape >> "$index"
+			#strings "$path" | escape >> "$index"
+			echo -n "," >> "$index"
 			echo " [+]"
 			;;
 		application/x-raw-disk-image)
@@ -162,7 +168,7 @@ do
 			}
 			;;
 	esac
-	printf "\n" >> "$index"
+	#printf "\n" >> "$index"
 	session_file_done $path
 done
 

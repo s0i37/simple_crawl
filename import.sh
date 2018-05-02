@@ -8,7 +8,7 @@
 db="$(basename $1)"
 db="${db%.*}".db
 [[ -e "$db" ]] || {
-	echo "create table words(uri text, ext text, type text, text text);" | sqlite3 $db
+	echo "CREATE VIRTUAL TABLE words USING fts3(uri TEXT, ext TEXT, type TEXT, text TEXT);" | sqlite3 $db
 }
 
 sqlite3 $db <<E
@@ -16,3 +16,4 @@ sqlite3 $db <<E
 .import $1 words
 E
 
+# https://www.sqlite.org/fts3.html
