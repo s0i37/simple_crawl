@@ -14,6 +14,8 @@ apt-get install 7z #(archive files)
 
 apt-get install lynx #(.html files)
 
+apt-get install maildir-utils mpack #(emails files)
+
 apt-get install tesseract-ocr #(image text recognize)
 
 
