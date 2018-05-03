@@ -43,6 +43,13 @@ function escape(){
 	echo -n '"'
 }
 
+function fork(){
+	tempdir="$1"
+	ln -s "$(realpath $0)" "$tempdir/$(basename $0)"
+	ln -s "$(realpath $index)" "$tempdir/$index"
+	( cd "$tempdir"; "./$(basename $0)" "${index%.*}"; )
+}
+
 index="$(basename $1).csv"
 session_file=".$(basename $1).sess"
 is_resume=$(session_create $session_file)
@@ -107,17 +114,13 @@ do
 		application/*compressed*|application/*zip*|application/*rar*|application/*tar*|application/*gzip*)
 			echo -n "zip," >> "$index"
 			7z l "$path" | tail -n +13 | escape >> "$index"
-			#printf "\n" >> "$index" 
+			echo " [+]"
 			temp=$(tempfile)
 			rm $temp && mkdir -p "$temp/$path"
-			#echo "$temp/$path"
 			7z x "$path" -o"$temp/$path" 1> /dev/null 2> /dev/null
-			ln -s "$(realpath $0)" "$temp/$(basename $0)"
-			ln -s "$(realpath $index)" "$temp/$index"
-			( cd "$temp"; "./$(basename $0)" "${index%.*}"; )
-			rm -r $temp
+			fork "$temp"
+			rm -r "$temp"
 			session_file_done $path
-			echo " [+]"
 			#break
 			;;
 		image/*)
@@ -130,18 +133,15 @@ do
 		message/*)
 			echo -n "message," >> "$index"
 			mu view "$path" | escape >> "$index"
-			#printf "\n" >> "$index"
+			echo " [+]"
 			temp=$(tempfile)
 			rm $temp && mkdir -p "$temp/$path"
 			cp "$path" "$temp/$path/"
 			munpack -t -f -C "$(realpath $temp/$path)" "$(basename $path)" > /dev/null
 			rm "$temp/$path/$(basename $path)"
-			ln -s "$(realpath $0)" "$temp/$(basename $0)"
-			ln -s "$(realpath $index)" "$temp/$index"
-			( cd "$temp"; "./$(basename $0)" "${index%.*}"; )
-			rm -r $temp
+			fork "$temp"
+			rm -r "$temp"
 			session_file_done $path
-			echo " [+]"
 			#break
 			;;
 		application/octet-stream)
@@ -169,7 +169,6 @@ do
 			}
 			;;
 	esac
-	#printf "\n" >> "$index"
 	session_file_done $path
 done
 
