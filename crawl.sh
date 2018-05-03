@@ -110,10 +110,11 @@ do
 			#printf "\n" >> "$index" 
 			temp=$(tempfile)
 			rm $temp && mkdir -p "$temp/$path"
+			#echo "$temp/$path"
 			7z x "$path" -o"$temp/$path" 1> /dev/null 2> /dev/null
 			ln -s "$(realpath $0)" "$temp/$(basename $0)"
 			ln -s "$(realpath $index)" "$temp/$index"
-			( cd "$temp"; "./$(basename $0)" "$(dirname $1|cut -c 2-)/${index%.*}"; )
+			( cd "$temp"; "./$(basename $0)" "${index%.*}"; )
 			rm -r $temp
 			session_file_done $path
 			echo " [+]"
