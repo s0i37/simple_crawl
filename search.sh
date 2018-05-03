@@ -1,7 +1,11 @@
 #!/bin/bash
 
+GREEN=$'\x1b[32m'
+RESET=$'\x1b[39m'
+
 LIMIT=10
-OFFSET=0
+OFFSET=1
+
 while getopts "c:o:" opt
 do
 	case $opt in
@@ -20,4 +24,7 @@ done
 
 DB="${@:$OPTIND:1}"
 shift $OPTIND
-echo "SELECT text FROM words WHERE text MATCH '$*' limit $LIMIT,$OFFSET;" | sqlite3 "$DB" | grep --color=auto "$*"
+echo $GREEN
+echo "SELECT uri FROM words WHERE text MATCH '$*' limit $LIMIT offset $OFFSET;" | sqlite3 "$DB"
+echo $RESET
+echo "SELECT text FROM words WHERE text MATCH '$*' limit $LIMIT offset $OFFSET;" | sqlite3 "$DB" | grep -o -P ".{0,100}$*..{0,100}" | grep --color=auto "$*"

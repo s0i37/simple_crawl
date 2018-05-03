@@ -37,9 +37,9 @@ function escape(){
 	echo -n '"'
 	while read line
 	do
-		echo -n "$line" | sed -r 's/"//g' | sed -r 's/,//g' | sed '/^\s*$/d' | tr '\r\n' ' '
+		echo -n "$line" | tr -d ',"\r\n'
 	done
-	echo -n "$line" | sed -r 's/"//g' | sed -r 's/,//g' | sed '/^\s*$/d' | tr '\r\n' ' '
+	echo -n "$line" | tr -d ',"\r\n'
 	echo -n '"'
 }
 

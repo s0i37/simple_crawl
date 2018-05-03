@@ -60,6 +60,4 @@ cd ..
 
 
 ## searching
-sqlite3 results.db
-
-sqlite> enjoy...
+./search.sh database.db words words words
