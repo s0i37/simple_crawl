@@ -23,7 +23,7 @@ apt-get install tesseract-ocr #(image text recognize)
 Now only support common formats: zip,rar,7z,html,txt,doc,docx,xls,xlsx,pdf,exe,images
 
 
-### http
+### HTTP
 ./spider.sh http://www.site.com/ [/usr/bin/wget options]
 
 ./crawl.sh www.site.com [/usr/bin/find options]
@@ -31,7 +31,7 @@ Now only support common formats: zip,rar,7z,html,txt,doc,docx,xls,xlsx,pdf,exe,i
 ./import.sh www.site.com.csv
 
 
-### ftp
+### FTP
 ./spider.sh ftp://ftp.site.com/pub [/usr/bin/wget options]
 
 ./crawl.sh ftp.site.com [/usr/bin/find options]
@@ -39,7 +39,7 @@ Now only support common formats: zip,rar,7z,html,txt,doc,docx,xls,xlsx,pdf,exe,i
 ./import.sh ftp.site.com.csv
 
 
-### samba
+### SMB
 mount -t cifs -o dom=domain,user=username //ip/share /mnt/
 
 ./crawl.sh /mnt/ [/usr/bin/find options]
@@ -47,7 +47,7 @@ mount -t cifs -o dom=domain,user=username //ip/share /mnt/
 ./import.sh mnt.csv
 
 
-### imap
+### IMAP
 mkdir emails && cd emails
 
 ./imap.sh imaps://imap.site.com user:pass
