@@ -1,6 +1,8 @@
 #!/bin/bash
 
+RED=$'\x1b[31m'
 GREEN=$'\x1b[32m'
+GREY=$'\x1b[90m'
 RESET=$'\x1b[39m'
 
 [[ $# -lt 1 ]] && {
@@ -54,7 +56,7 @@ index="$(basename $1).csv"
 session_file=".$(basename $1).sess"
 is_resume=$(session_create $session_file)
 
-find "$1" -type f -size -15M ! -iname '*.pdf' -print |
+find $1 -type f -size -15M ! -iname '*.pdf' -print |
 while read path
 do
 	[[ $is_resume = 1 && $(session_is_file_done $path) = 1 ]] && {
@@ -62,12 +64,12 @@ do
 		continue
 	}
 	printf "\n" >> "$index"
-	echo -n $GREEN "$path" $RESET
+	echo -n "$(date +%s)," >> "$index"
+	echo -n "$path"
 	echo -n "$path" | escape >> "$index"
 	echo -n "," >> "$index"
 	filename=$(basename $path)
 	ext=${filename##*.}
-	ext=${ext%\?*}
 	echo -n "$ext" | escape >> "$index"
 	echo -n "," >> "$index"
 	mime=$(xdg-mime query filetype "$path")
@@ -75,47 +77,47 @@ do
 		*/xml)
 			echo -n "xml," >> "$index"
 			cat "$path" | escape >> "$index"
-			echo " [+]"
+			echo $GREEN " [xml]" $RESET
 			;;
 		*/*html*)
 			echo -n "html," >> "$index"
 			cat "$path" | lynx -nolist -dump -stdin | escape >> "$index"
-			echo " [+]"
+			echo $GREEN " [html]" $RESET
 			;;
 		text/*|*/*script)
 			echo -n "text," >> "$index"
 			cat "$path" | escape >> "$index"
-			echo " [+]"
+			echo $GREEN " [text]" $RESET
 			;;
 		application/msword)
 			echo -n "doc," >> "$index"
 			catdoc "$path" | escape >> "$index"
-			echo " [+]"
+			echo $GREEN " [doc]" $RESET
 			;;
 		application/vnd.openxmlformats-officedocument.wordprocessingml.document)
 			echo -n "doc," >> "$index"
 			unzip -p "$path" | grep '<w:r' | sed 's/<w:p[^<\/]*>/ /g' | sed 's/<[^<]*>//g' | grep -v '^[[:space:]]*$' | sed G | escape >> "$index"
-			echo " [+]"
+			echo $GREEN " [docx]" $RESET
 			;;
 		application/vnd.ms-excel|application/vnd.openxmlformats-officedocument.spreadsheetml.sheet)
 			echo -n "xls," >> "$index"
 			xls2csv -x "$path" | escape >> "$index"
-			echo " [+]"
+			echo $GREEN " [xls]" $RESET
 			;;
 		application/pdf)
 			echo -n "pdf," >> "$index"
 			pdf2txt -t text "$path" | escape >> "$index"
-			echo " [+]"
+			echo $GREEN " [pdf]" $RESET
 			;;
 		application/x-executable|application/x-ms-dos-executable)
 			echo -n "exe," >> "$index"
 			/opt/radare2/bin/rabin2 -z "$path" | sed -rn "s/vaddr=[^\s]+.*string=(.*)/\1/p" | escape >> "$index"
-			echo " [+]"
+			echo $GREEN " [binary]" $RESET
 			;;
 		application/*compressed*|application/*zip*|application/*rar*|application/*tar*|application/*gzip*)
 			echo -n "zip," >> "$index"
 			7z l "$path" | tail -n +13 | escape >> "$index"
-			echo " [+]"
+			echo $GREEN " [archive]" $RESET
 			temp=$(tempfile)
 			rm $temp && mkdir -p "$temp/$path"
 			7z x "$path" -o"$temp/$path" 1> /dev/null 2> /dev/null
@@ -126,15 +128,15 @@ do
 			;;
 		image/*)
 			echo -n "image," >> "$index"
-			identify -verbose "$path" | escape >> "$index"
+			identify -verbose "$path" 2> /dev/null | escape >> "$index"
 			#tesseract "$path" stdout -l eng >> "$index"
 			#tesseract "$path" stdout -l rus >> "$index"
-			echo " [+]"
+			echo $GREEN " [img]" $RESET
 			;;
 		message/*)
 			echo -n "message," >> "$index"
 			mu view "$path" | escape >> "$index"
-			echo " [+]"
+			echo $GREEN " [message]" $RESET
 			temp=$(tempfile)
 			rm $temp && mkdir -p "$temp/$path"
 			cp "$path" "$temp/$path/"
@@ -149,24 +151,24 @@ do
 			echo -n "raw," >> "$index"
 			#strings "$path" | escape >> "$index"
 			echo -n "," >> "$index"
-			echo " [+]"
+			echo $GREEN " [raw]" $RESET
 			;;
 		application/x-raw-disk-image)
 			echo -n "disk," >> "$index"
 			binwalk "$path" | escape >> "$index"
-			echo " [+]"
+			echo $GREEN " [disk]" $RESET
 			;;
 		*)
 			echo -n "unknown," >> "$index"
 			file "$path" | grep text > /dev/null &&
 			{
 				cat "$path" | escape >> "$index"
-				echo " [+]"
+				echo $GREY " [unknown]" $RESET
 			} || {
 				#strings "$path" >> "$index"
 				echo -n "," >> "$index"
 				echo "$path $mime" >> unknown_mime.log
-				echo " [-]"
+				echo $RED " [error]" $RESET
 			}
 			;;
 	esac
