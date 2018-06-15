@@ -224,7 +224,10 @@ elif args.query:
 		title = result['_source']['intitle']
 		texts = ''
 		for text in result['_source'].values():
-			texts += text
+			try:
+				texts += text
+			except:
+				pass
 		matches = []
 		for match in result['highlight'].values():
 			matches += match
