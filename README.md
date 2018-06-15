@@ -17,7 +17,9 @@ apt-get install lynx #(.html files)
 
 apt-get install maildir-utils mpack #(emails files)
 
-apt-get install tesseract-ocr #(image text recognize)
+apt-get install tesseract-ocr #(image text recognize, optional)
+
+wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.3.0.deb && dpkg -i elasticsearch-6.3.0.deb #(gui, optional)
 ```
 
 ## crawling
@@ -73,13 +75,13 @@ cd ..
 ```
 service elasticsearch start
 
-./search_tool.py 127.0.0.1:9200 -i newindex -init
+./search_tool.py 127.0.0.1:9200 -i indexname -init
 
-./search_tool.py 127.0.0.1:9200 -i newindex -import path/to/import.csv
+./search_tool.py 127.0.0.1:9200 -i indexname -import path/to/import.csv
 ```
 ### searching
 ```
 ./index.js
 
-surf http://127.0.0.1:8080/newindex/
+surf http://127.0.0.1:8080/indexname/
 ```
