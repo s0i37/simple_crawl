@@ -201,12 +201,16 @@ elif args.csv_file:
 				"inurl": index[1],
 				"site": index[1].split('/')[0],
 				"ext": index[2],
-				"intitle": index[1],
+				"intitle": '',
 				"intext": index[4],
 				"filetype": index[3]
 			}
-			print page["inurl"]
-			es.index( index=args.index, doc_type='page', id=re.sub( r'[\n/]', '', base64.encodestring( page["inurl"] ) ), body=page )
+			print page["inurl"],
+			try:
+				es.index( index=args.index, doc_type='page', id=re.sub( r'[\n/]', '', base64.encodestring( page["inurl"] ) ), body=page )
+				print GREEN_NORM + ' [+]' + RESET
+			except:
+				print RED + ' [-]' + RESET
 
 elif args.query:
 	QUERY['query']['query_string']['query'] = ' '.join( args.query )

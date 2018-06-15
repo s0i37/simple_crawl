@@ -123,24 +123,22 @@ function search(response, request)
             var id = res.hits.hits[i]._id
             var relevant = res.hits.hits[i]._score
             var timestamp = res.hits.hits[i]._source.date
-            var title = res.hits.hits[i]._source.intitle
             var url = res.hits.hits[i]._source.inurl
+            var filetype = res.hits.hits[i]._source.filetype
             var href = url
             var matches = []
             for( item in res.hits.hits[i].highlight )
             {
                 if(item == 'inurl')
                     url = res.hits.hits[i].highlight[item][0]
-                else if(item == 'intitle')
-                    title = res.hits.hits[i].highlight[item][0]
                 else if(item == 'intext')
                     matches.push( res.hits.hits[i].highlight[item] )
             }
             pages.push( {
                 cache: "/" + index + "/cache?id=" + id,
-                title: title.replace(/_b_/g, '<b>').replace(/_\/b_/g, '</b>'),
                 href: href,
                 url: url.replace(/_b_/g, '<b>').replace(/_\/b_/g, '</b>'),
+                filetype: filetype,
                 relevant: relevant,
                 timestamp: timestamp,
                 matches: matches.join(" ... ").replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/_b_/g, '<b>').replace(/_\/b_/g, '</b>')
