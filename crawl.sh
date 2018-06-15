@@ -69,50 +69,59 @@ do
 	echo -n "$path" | escape >> "$index"
 	echo -n "," >> "$index"
 	filename=$(basename $path)
+	filename=${filename%\?*}
 	ext=${filename##*.}
+	[[ $filename = $ext ]] && ext=''
 	echo -n "$ext" | escape >> "$index"
 	echo -n "," >> "$index"
-	mime=$(xdg-mime query filetype "$path")
+	mime=$(file -bi "$path")
+	mime=${mime%' '*}
 	case $mime in
-		*/xml)
+		*/xml\;)
 			echo -n "xml," >> "$index"
 			cat "$path" | escape >> "$index"
 			echo $GREEN " [xml]" $RESET
 			;;
 		*/*html*)
 			echo -n "html," >> "$index"
-			cat "$path" | lynx -nolist -dump -stdin | escape >> "$index"
+			codepage=$(uchardet "$path")
+			cat "$path" | iconv -f $codepage | lynx -nolist -dump -stdin | escape >> "$index"
 			echo $GREEN " [html]" $RESET
 			;;
-		text/*|*/*script)
+		text/*|*/*script\;)
 			echo -n "text," >> "$index"
 			cat "$path" | escape >> "$index"
 			echo $GREEN " [text]" $RESET
 			;;
-		application/msword)
+		application/msword\;)
 			echo -n "doc," >> "$index"
 			catdoc "$path" | escape >> "$index"
 			echo $GREEN " [doc]" $RESET
 			;;
-		application/vnd.openxmlformats-officedocument.wordprocessingml.document)
+		application/vnd.openxmlformats-officedocument.wordprocessingml.document\;)
 			echo -n "doc," >> "$index"
 			unzip -p "$path" | grep '<w:r' | sed 's/<w:p[^<\/]*>/ /g' | sed 's/<[^<]*>//g' | grep -v '^[[:space:]]*$' | sed G | escape >> "$index"
 			echo $GREEN " [docx]" $RESET
 			;;
-		application/vnd.ms-excel|application/vnd.openxmlformats-officedocument.spreadsheetml.sheet)
+		application/vnd.ms-excel\;|application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\;)
 			echo -n "xls," >> "$index"
 			xls2csv -x "$path" | escape >> "$index"
 			echo $GREEN " [xls]" $RESET
 			;;
-		application/pdf)
+		application/pdf\;)
 			echo -n "pdf," >> "$index"
-			pdf2txt -t text "$path" | escape >> "$index"
+			pdf2txt -t text "$path" 2> /dev/null | escape >> "$index"
 			echo $GREEN " [pdf]" $RESET
 			;;
-		application/x-executable|application/x-ms-dos-executable)
+		application/x-executable\;|application/x-ms-dos-executable\;)
 			echo -n "exe," >> "$index"
-			/opt/radare2/bin/rabin2 -z "$path" | sed -rn "s/vaddr=[^\s]+.*string=(.*)/\1/p" | escape >> "$index"
-			echo $GREEN " [binary]" $RESET
+			/opt/radare2/bin/rabin2 -z "$path" 2> /dev/null | escape >> "$index"
+			echo $GREEN " [exe]" $RESET
+			;;
+		application/x-object\;|application/x-sharedlib|application/x-executable\;)
+			echo -n "elf," >> "$index"
+			/opt/radare2/bin/rabin2 -z "$path" 2> /dev/null | escape >> "$index"
+			echo $GREEN " [elf]" $RESET
 			;;
 		application/*compressed*|application/*zip*|application/*rar*|application/*tar*|application/*gzip*)
 			echo -n "zip," >> "$index"
@@ -147,13 +156,13 @@ do
 			session_file_done $path
 			#break
 			;;
-		application/octet-stream)
+		application/octet-stream\;)
 			echo -n "raw," >> "$index"
 			#strings "$path" | escape >> "$index"
 			echo -n "," >> "$index"
 			echo $GREEN " [raw]" $RESET
 			;;
-		application/x-raw-disk-image)
+		application/x-raw-disk-image\;)
 			echo -n "disk," >> "$index"
 			binwalk "$path" | escape >> "$index"
 			echo $GREEN " [disk]" $RESET

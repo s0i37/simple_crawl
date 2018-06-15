@@ -2,7 +2,7 @@
 pure-bash http/ftp/smb/imap crawling
 
 ## requirements
-apt-get install xdg-utils #(mimetypes)
+apt-get install uchardet #(charset detect)
 
 apt-get install catdoc #(.doc and .xls files)
 
@@ -59,5 +59,21 @@ cd ..
 ./import.sh emails.csv
 
 
-## searching
+## searching (cli)
 ./search.sh database.db words words words
+
+## searching (gui)
+cd search
+
+### prepare
+service elasticsearch start
+
+./search_tool.py 127.0.0.1:9200 -i newindex -init
+
+./search_tool.py 127.0.0.1:9200 -i newindex -import path/to/import.csv
+
+### searching
+
+./index.js
+
+surf http://127.0.0.1:8080/newindex/
