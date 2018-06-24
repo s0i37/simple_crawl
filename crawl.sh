@@ -52,11 +52,11 @@ function fork(){
 	( cd "$tempdir"; "./$(basename $0)" "${index%.*}"; )
 }
 
-index="$(basename $1).csv"
-session_file=".$(basename $1).sess"
-is_resume=$(session_create $session_file)
+index=$(basename "$1").csv
+session_file=".$(basename "$1").sess"
+is_resume=$(session_create "$session_file")
 
-find $1 -type f -size -15M ! -iname '*.pdf' -print |
+find "$1" -type f -size -15M ! -iname '*.pdf' -print |
 while read path
 do
 	[[ $is_resume = 1 && $(session_is_file_done $path) = 1 ]] && {
@@ -68,7 +68,7 @@ do
 	echo -n "$path"
 	echo -n "$path" | escape >> "$index"
 	echo -n "," >> "$index"
-	filename=$(basename $path)
+	filename=$(basename "$path")
 	filename=${filename%\?*}
 	ext=${filename##*.}
 	[[ $filename = $ext ]] && ext=''

@@ -25,6 +25,8 @@ done
 DB="${@:$OPTIND:1}"
 shift $OPTIND
 echo $GREEN
-echo "SELECT uri FROM words WHERE text MATCH '$*' limit $LIMIT offset $OFFSET;" | sqlite3 "$DB"
+#echo "SELECT uri FROM words WHERE text MATCH '$*' limit $LIMIT offset $OFFSET;" | sqlite3 "$DB"
+echo "SELECT uri FROM words WHERE text LIKE '%$*%' limit $LIMIT offset $OFFSET;" | sqlite3 "$DB"
 echo $RESET
-echo "SELECT text FROM words WHERE text MATCH '$*' limit $LIMIT offset $OFFSET;" | sqlite3 "$DB" | grep -o -P ".{0,100}$*..{0,100}" | grep --color=auto "$*"
+#echo "SELECT text FROM words WHERE text MATCH '$*' limit $LIMIT offset $OFFSET;" | sqlite3 "$DB" | grep -o -P ".{0,100}$*..{0,100}" | grep --color=auto "$*"
+echo "SELECT text FROM words WHERE text LIKE '%$*%' limit $LIMIT offset $OFFSET;" | sqlite3 "$DB" | grep -o -P ".{0,100}$*..{0,100}" | grep --color=auto "$*"
